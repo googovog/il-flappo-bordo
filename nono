@@ -1,0 +1,113 @@
+// Impostazioni iniziali
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = 320;
+canvas.height = 480;
+
+// Variabili di gioco
+let bird = { x: 50, y: 200, width: 20, height: 20, gravity: 0.6, velocity: 0, lift: -15 };
+let pipes = [];
+let score = 0;
+
+// Funzione per il movimento del uccello
+function moveBird() {
+  bird.velocity += bird.gravity;
+  bird.y += bird.velocity;
+  if (bird.y > canvas.height - bird.height) {
+    bird.y = canvas.height - bird.height;
+    bird.velocity = 0;
+  }
+  if (bird.y < 0) {
+    bird.y = 0;
+    bird.velocity = 0;
+  }
+}
+
+// Funzione per disegnare il gioco
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Disegna il bird
+  ctx.fillStyle = "yellow";
+  ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+
+  // Disegna i tubi
+  ctx.fillStyle = "green";
+  pipes.forEach(pipe => {
+    ctx.fillRect(pipe.x, 0, pipe.width, pipe.topHeight);
+    ctx.fillRect(pipe.x, pipe.bottomY, pipe.width, canvas.height - pipe.bottomY);
+  });
+
+  // Disegna il punteggio
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
+  ctx.fillText("Score: " + score, 10, 30);
+}
+
+// Funzione per il movimento dei tubi
+function movePipes() {
+  pipes.forEach(pipe => {
+    pipe.x -= 2;
+  });
+  if (pipes[0] && pipes[0].x < -pipes[0].width) {
+    pipes.shift();
+    score++;
+  }
+}
+
+// Funzione per creare i tubi
+function createPipes() {
+  if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 150) {
+    const topHeight = Math.floor(Math.random() * (canvas.height / 2));
+    const bottomY = topHeight + 100;
+    pipes.push({
+      x: canvas.width,
+      topHeight: topHeight,
+      bottomY: bottomY,
+      width: 40
+    });
+  }
+}
+
+// Funzione per controllare la collisione
+function checkCollision() {
+  for (let pipe of pipes) {
+    if (bird.x + bird.width > pipe.x && bird.x < pipe.x + pipe.width) {
+      if (bird.y < pipe.topHeight || bird.y + bird.height > pipe.bottomY) {
+        // Collisione
+        alert("Game Over! Score: " + score);
+        resetGame();
+      }
+    }
+  }
+}
+
+// Funzione per il salto del bird
+function flap() {
+  bird.velocity = bird.lift;
+}
+
+// Funzione di reset
+function resetGame() {
+  bird.y = 200;
+  bird.velocity = 0;
+  pipes = [];
+  score = 0;
+}
+
+// Gestione dell'evento di salto
+document.addEventListener("keydown", flap);
+
+// Funzione principale di gioco
+function gameLoop() {
+  moveBird();
+  movePipes();
+  createPipes();
+  checkCollision();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+// Avvio del gioco
+gameLoop();
